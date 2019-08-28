@@ -10,4 +10,5 @@ Note - You should have latest Mozilla Firefox installed
 http://localhost:8000/search/ - Search Endpoint
 
 GET - Returns the latest 30 result that have been searched.
-POSt - Search for a new query and returns the new searched objects.
+
+POST - Search for a new query and returns the new searched objects.
