@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 
-class DocumentScraper(object):
+
+class DocumentScraper:
 
     def __init__(self, html_source):
         self.bs = BeautifulSoup(html_source, "html.parser")

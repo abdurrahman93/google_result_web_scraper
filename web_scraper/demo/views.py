@@ -8,10 +8,11 @@ from .models import GoogleResult
 from .page import GooglePage
 from .scraper import DocumentScraper
 
+
 geckodriver_path = os.path.join(settings.BASE_DIR, 'demo', 'geckodriver', 'geckodriver.exe')
 
-class GoogleResultApi(mixins.CreateModelMixin, mixins.ListModelMixin,
-                  mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+class GoogleResultApi(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     """
     list:
     Returns the list of query objects objects that have been searched.
@@ -39,19 +40,24 @@ class GoogleResultApi(mixins.CreateModelMixin, mixins.ListModelMixin,
             return self.queryset
 
     def create(self, request, *args, **kwargs):
-        driver = webdriver.Firefox(executable_path=geckodriver_path)
-        page_instance = GooglePage(driver)
         query_param = request.data.get('query_param', '')
-        page_instance.make_search_query(query_param)
-        scraper_instance = DocumentScraper(page_instance.get_page_source())
-        text_url_list = scraper_instance.get_url_and_text_list()
-        try: 
-            driver.quit()
-        except: 
-            pass
-        serializer = GoogleResultModelSerializer(data=[{'query_param': query_param, 'text': obj.get('text'), 'url': obj.get('url')} for obj in text_url_list], many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        if query_param:
+            driver = webdriver.Firefox(executable_path=geckodriver_path)
+            page_instance = GooglePage(driver)
+            page_instance.make_search_query(query_param)
+            scraper_instance = DocumentScraper(page_instance.get_page_source())
+            text_url_list = scraper_instance.get_url_and_text_list()
+            try:
+                driver.quit()
+
+                serializer = GoogleResultModelSerializer(data=[{'query_param': query_param, 'text': obj.get('text'),
+                                                                'url': obj.get('url')} for obj in text_url_list], many=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(data=serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except:
+                return Response(data={}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={}, status=status.HTTP_400_BAD_REQUEST)
